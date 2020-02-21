@@ -5,6 +5,8 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
+from datetime import datetime
+
 
 #create an array of user features
 def load_users():
@@ -57,6 +59,32 @@ def load_interactions(num_users, num_items):
         activity[user_id-1][item_id-1] = 1 
             
     return activity
+
+
+def add_timestamp():
+    #load all input data
+    users = load_users()
+    items = load_items()
+    num_users, num_items = len(users), len(items)
+
+    in_file = open("data/interactions.txt", "r")
+    out_file = open("data/temporal_interactions.csv", "w")
+    
+    for index,line in enumerate(in_file):
+    
+        #first row is the header
+        if index == 0:
+            out_file.write("ITEM_ID\tUSER_ID\tTIMESTAMP\n")
+
+        user_id, item_id = line.split()
+        now = datetime.now()
+
+        out_file.write("{}\t{}\t{}\n".format(user_id, item_id, now))
+
+
+    in_file.close()
+    out_file.close()
+
     
 #output array of predictions to a text file
 def output_predictions(predictions):
@@ -68,29 +96,35 @@ def output_predictions(predictions):
     f.close()
 
 
-#load all input data
-users = load_users()
-items = load_items()
-num_users, num_items = len(users), len(items)
-activity = load_interactions(num_users, num_items)
+def run_recsys():
+    #load all input data
+    users = load_users()
+    items = load_items()
+    num_users, num_items = len(users), len(items)
+    activity = load_interactions(num_users, num_items)
 
-rs = RecommenderSystems()
+    rs = RecommenderSystems()
 
-#use cross-validation to find the best value of k for k-nearest neighbors
-print('starting cross-validation for k-nearest neighbors')
-ks = [100, 200, 300, 400, 500]
-predictions = rs.run_recommender_system(users, items, activity, ks, train=True, mode='knn_user')
+    #use cross-validation to find the best value of k for k-nearest neighbors
+    print('starting cross-validation for k-nearest neighbors')
+    ks = [100, 200, 300, 400, 500]
+    predictions = rs.run_recommender_system(users, items, activity, ks, train=True, mode='knn_user')
 
-#use cross-validation to find the best value of k for singular value decomposition
-print('starting cross-validation for SVD')
-ks = [2, 3, 4, 5, 6]
-predictions = rs.run_recommender_system(users, items, activity, ks, train=True, mode='svd')
+    #use cross-validation to find the best value of k for singular value decomposition
+    print('starting cross-validation for SVD')
+    ks = [2, 3, 4, 5, 6]
+    predictions = rs.run_recommender_system(users, items, activity, ks, train=True, mode='svd')
 
-#generate final predictions using k-nearest neighbors where k=500
-print('generating predictions for k-nearest neighbors with k=300')
-predictions = rs.run_recommender_system(users, items, activity, [300], train=False, mode='knn_user')
+    #generate final predictions using k-nearest neighbors where k=500
+    print('generating predictions for k-nearest neighbors with k=300')
+    predictions = rs.run_recommender_system(users, items, activity, [300], train=False, mode='knn_user')
 
-#write predictions to file
-print('outputting predictions to data/predictions.txt')
-output_predictions(predictions)
+    #write predictions to file
+    print('outputting predictions to data/predictions.txt')
+    output_predictions(predictions)
+
+
+# start
+
+add_timestamp()
     
